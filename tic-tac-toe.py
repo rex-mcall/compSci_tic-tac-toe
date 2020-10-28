@@ -1,19 +1,26 @@
 import sqlite3
 import random
+tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
 con = sqlite3.connect('winloss.db')
 cur = con.cursor()
-cur.execute("""CREATE TABLE win_record (
-    name text,
-    wins integer,
-    loss integer
-    )""" )
-con.commit()
 
-def NewPlayer():
-    playName = input("enter name")
-    cur.execute("INSERT INTO win_record VALUES(playerName, 0, 0)")
-def UpdateScore(Winner, Loser):
-    
+def NewPlayer(): # adds new player to data base
+    playName = input("enter name: ")
+    cur.execute("INSERT INTO win_record VALUES('rex',0,0,0)")
+    con.commit()
+
+def UpdateScore(Winner, Loser): # updates score pass wiiner first and loser 2nd
+    cur.execute("""UPDATE win_record SET wins = :wins
+                WHERE name = :name""",{'name': Winner, 'wins' : num })
+
+
+def PrintDatabase(): #prints whole database 
+    print(cur.fetchall())
+def testInt():
+    NewPlayer()
+    cur.execute("SELECT * FROM win_record Where name ='rex'")
+    print(cur.fetchone())
+testInt()
 
 def DisplayBoard(board):
     #
@@ -66,26 +73,45 @@ def VictoryFor(board, sign):
         if board[0][x] == sign and board[1][x] == sign and board[2][x] == sign: return True
     if board[0][0] == sign and board[1][1] == sign and board[2][2] == sign: return True
     if board[0][2] == sign and board[1][1] == sign and board[2][0] == sign: return True
-    return false
+    return False
 
-
+#
+# the function draws the computer's move and updates the board
+#
 def DrawMove(board):
-    #
-    # the function draws the computer's move and updates the board
-    #
+    
     EnterMove(tttBoard)
     DisplayBoard(tttBoard)
     if VictoryFor(tttBoard, 'X'):
         print("You win!")
         exit(0)
+    print("My turn: ")
     ff = MakeListOfFreeFields(tttBoard)
-    randomMove = random.randrange(0,len(ff))
-    for i in range(0,3):
-        try:
-            board[i][board[i].index(randomMove[ff](1))] = "O"
-        except ValueError:
-                pass
+    if len(ff) == 0: 
+        print("Tie")
+        exit(0)
+    randomMove = random.randrange(1,len(ff))
+    try:
+        tttBoard[ff[randomMove][0]][ff[randomMove][1]] = "O"
+        DisplayBoard(tttBoard)
+    except ValueError:
+        pass
+    if VictoryFor(tttBoard, 'O'):
+        print("You lose!")
+        exit(0)
 
-tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
-con.close
+def startup():
+    PrintDatabase()
+    DisplayBoard(tttBoard)
+
+def main():
+    while(1):
+        DrawMove(tttBoard)
+
+
+
+
+startup()
+main()
+con.close()
 
