@@ -24,14 +24,14 @@ def MakeListOfFreeFields(board):
     # the function browses the board and builds a list of all the free squares; 
     # the list consists of tuples, while each tuple is a pair of row and column numbers
     #
-    lofb = []
+    loff = []
     for x in range(0,3):
         for i in tttBoard[x]:
             for y in range(1,10):
                 if i == y:
-                    lofb.append((x,board[x].index(i)))
+                    loff.append((x,board[x].index(i)))
                     break
-    return lofb
+    return loff
 
 def VictoryFor(board, sign):
     #
