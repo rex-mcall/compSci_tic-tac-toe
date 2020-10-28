@@ -1,12 +1,32 @@
+import sqlite3
+import random
+con = sqlite3.connect('winloss.db')
+cur = con.cursor()
+cur.execute("""CREATE TABLE win_record (
+    name text,
+    wins integer,
+    loss integer
+    )""" )
+con.commit()
+
+def NewPlayer():
+    playName = input("enter name")
+    cur.execute("INSERT INTO win_record VALUES(playerName, 0, 0)")
+def UpdateScore(Winner, Loser):
+    
+
 def DisplayBoard(board):
     #
     # the function accepts one parameter containing the board's current status
     # and prints it out to the console
     #
     bLine = "+---------+---------+---------+"
+    sLine = "|         |         |         |" # can u run code
     print(bLine)
-    for x in range(0,3):
-        print("|   ",board[x][0],"   |   ",board[x][1],"   |   ",board[x][2],"   |")
+    for x in range(0, 3):
+        print(sLine)
+        print("|   ", board[x][0], "   |   ", board[x][1], "   |   ", board[x][2], "   |")
+        print(sLine)
         print(bLine)
 
 
@@ -15,9 +35,12 @@ def EnterMove(board):
     # the function accepts the board current status, asks the user about their move, 
     # checks the input and updates the board according to the user's decision
     #
-    move = input("Enter your move: ")
+    move = int(input("Enter your move: "))
     for i in range(0,3):
-        board[board[i].index(move)] = "X"
+        try:
+            board[i][board[i].index(move)] = "X"
+        except ValueError:
+                pass
 
 def MakeListOfFreeFields(board):
     #
@@ -50,8 +73,19 @@ def DrawMove(board):
     #
     # the function draws the computer's move and updates the board
     #
-    print("random code to get rid of squiggly lines")
+    EnterMove(tttBoard)
+    DisplayBoard(tttBoard)
+    if VictoryFor(tttBoard, 'X'):
+        print("You win!")
+        exit(0)
+    ff = MakeListOfFreeFields(tttBoard)
+    randomMove = random.randrange(0,len(ff))
+    for i in range(0,3):
+        try:
+            board[i][board[i].index(randomMove[ff](1))] = "O"
+        except ValueError:
+                pass
 
 tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
-
+con.close
 

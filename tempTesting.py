@@ -1,14 +1,17 @@
 tttBoard = [["X",2,3], [4,"O",6], [7,8,"X"]]
-
+import random
 def DisplayBoard(board):
     #
     # the function accepts one parameter containing the board's current status
     # and prints it out to the console
     #
     bLine = "+---------+---------+---------+"
+    sLine = "|         |         |         |" # can u run code
     print(bLine)
-    for x in range(0,3):
-        print("|   ",board[x][0],"   |   ",board[x][1],"   |   ",board[x][2],"   |")
+    for x in range(0, 3):
+        print(sLine)
+        print("|   ", board[x][0], "   |   ", board[x][1], "   |   ", board[x][2], "   |")
+        print(sLine)
         print(bLine)
 
 
@@ -19,7 +22,10 @@ def EnterMove(board):
     #
     move = int(input("Enter your move: "))
     for i in range(0,3):
-        board[board[i].index(move)] = "X"
+        try:
+            board[i][board[i].index(move)] = "X"
+        except ValueError:
+                pass
 
 def MakeListOfFreeFields(board):
     #
@@ -45,15 +51,24 @@ def VictoryFor(board, sign):
         if board[0][x] == sign and board[1][x] == sign and board[2][x] == sign: return True
     if board[0][0] == sign and board[1][1] == sign and board[2][2] == sign: return True
     if board[0][2] == sign and board[1][1] == sign and board[2][0] == sign: return True
-    return false
-
-
+    return False
 def DrawMove(board):
     #
     # the function draws the computer's move and updates the board
     #
-    print("random code to get rid of squiggly lines")
+    EnterMove(tttBoard)
+    DisplayBoard(tttBoard)
+    if VictoryFor(tttBoard, 'X'):
+        print("You win!")
+        exit(0)
+    ff = MakeListOfFreeFields(tttBoard)
+    randomMove = random.randrange(0,len(ff))
+    for i in range(0,3):
+        try:
+            tttBoard[i][tttBoard[i].index(randomMove[ff](1))] = "O"
+            DisplayBoard(tttBoard)
+        except ValueError:
+                pass
 
 
-EnterMove(tttBoard)
-print(tttBoard)
+DrawMove(tttBoard)
