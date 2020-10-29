@@ -1,6 +1,8 @@
+from drawMove import drawMove
 import sqlite3
 import random
 import os
+from drawMove import drawMove
 
 originalBoard = [[1,2,3], [4,5,6], [7,8,9]]
 tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
@@ -28,38 +30,65 @@ else:
     con.commit()
 
 def NewPlayer_1(): # adds new player to data base if they don't already exist
-    currNames = cur.execute("SELECT name from win_record")
+    cur.execute("SELECT name FROM win_record")
+    currNames = cur.fetchall()
+    playerExists = False
     for i in currNames:
-        if playName == i: return
-    cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName,0,0,0))
-    con.commit()
+        if playName == i[0]: playerExists = True
+    if playerExists != True:
+        cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName,0,0,0))
+        con.commit()
 
 def NewPlayer_2(): # adds new player to data base if they don't already exist
-    currNames = cur.execute("SELECT name from win_record")
+    cur.execute("SELECT name FROM win_record")
+    currNames = cur.fetchall()
+    playerExists = False
     for i in currNames:
-        if playName2 == i: return
-    cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName2,0,0,0))
-    con.commit()
+        if playName == i[0]: playerExists = True
+    if playerExists != True:
+        cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName,0,0,0))
+        con.commit()
 
 def UpdateScore(Winner, Loser): # updates score pass wiiner first and loser 2nd
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : Winner})
     w = cur.fetchone()
-    cur.execute("UPDATE win_record (wins) VALUES(?)",((w[1]+1)))
+    with con: 
+        cur.execute("""UPDATE win_record SET wins = :wins 
+                        WHERE name = :name """,
+                        {'name': Winner,'wins':(w[1]+1)})
+                        # cur.execute( "UPDATE win_record SET wins = ? WHERE true", ((w[1]+1)) )
+            
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : Loser})
     L = cur.fetchone()
-    cur.execute("UPDATE win_record (wins) VALUES(?)",((w[2]+1)))
+    with con:       
+        cur.execute("""UPDATE win_record SET loss = :loss 
+                        WHERE name = :name """,
+                        {'name': Loser,'loss':(L[2]+1)})
+                        #cur.execute("UPDATE win_record SET wins = ?",((L[2]+1)))
+    con.commit()
  
    
 
 def Tie(p1,p2):
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : p1})
-    p1s = cur.fetchone()
-    cur.execute("UPDATE win_record (wins) VALUES(?)",((p1s[3]+1)))
+    w = cur.fetchone()
+    with con: 
+        cur.execute("""UPDATE win_record SET tie = :tie 
+                        WHERE name = :name """,
+                        {'name': p1,'wins':(w[3]+1)})
+                        # cur.execute( "UPDATE win_record SET wins = ? WHERE true", ((w[1]+1)) )
+            
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : p2})
-    p2s = cur.fetchone()
-    cur.execute("UPDATE win_record (wins) VALUES(?)",((p2s[3]+1)))
+    L = cur.fetchone()
+    with con:       
+        cur.execute("""UPDATE win_record SET tie = :tie 
+                        WHERE name = :name """,
+                        {'name': p2,'tie':(L[3]+1)})
+                        #cur.execute("UPDATE win_record SET wins = ?",((L[2]+1)))
+    con.commit()
     
 def PrintDatabase(): #prints whole database 
+    cur.execute("SELECT * FROM win_record")
     print(cur.fetchall())
 
 
@@ -130,19 +159,18 @@ def VictoryFor(board, sign):
 # the function draws the computer's move and updates the board
 #
 def DrawMove_computer(board):
-    
     EnterMove(tttBoard)
     DisplayBoard(tttBoard)
     if VictoryFor(tttBoard, 'X'):
         print("You win!")
         UpdateScore(playName,"bot")
-        exit(0)
+        end()
     print("My turn: ")
     ff = MakeListOfFreeFields(tttBoard)
     if len(ff) == 0: 
         print("Tie")
         Tie(playName,"bot")
-        exit(0)
+        end()
     randomMove = random.randrange(1,len(ff))
     try:
         tttBoard[ff[randomMove][0]][ff[randomMove][1]] = "O"
@@ -150,40 +178,45 @@ def DrawMove_computer(board):
     except ValueError:
         pass
     if VictoryFor(tttBoard, 'O'):
+        print("You lose :(")
         UpdateScore("bot", playName)
-        exit(0)
+        end()
 
 def DrawMove_multiplayer(board):
-    print("It is ", playName, "s turn")
+    print("It is ", playName, "\'s turn")
     EnterMove(tttBoard)
     DisplayBoard(tttBoard)
     if VictoryFor(tttBoard, 'X'):
         print(playName, " wins!")
         UpdateScore(playName, playName2)
-        exit(0)
-    print("My turn: ")
+        end()
+
+
     ff = MakeListOfFreeFields(tttBoard)
     if len(ff) == 0: 
         print("Tie")
         Tie(playName,playName2)
-        exit(0)
-    print("It is ", playName2, "s turn")
+        end()
+    print("It is ", playName2, "\'s turn")
     EnterMoveP2(tttBoard)
+    DisplayBoard(tttBoard)
     if VictoryFor(tttBoard, 'O'):
         print(playName2, "wins")
         UpdateScore(playName2,playName)
-        exit(0)
+
    
 def startup():
     print("""
-          ________________   _________   ______   __________  ______
-         /_  __/  _/ ____/  /_  __/   | / ____/  /_  __/ __ \/ ____/
-          / /  / // /  ______/ / / /| |/ /  ______/ / / / / / __/   
-         / / _/ // /__/_____/ / / ___ / /__/_____/ / / /_/ / /___   
-        /_/ /___/\____/    /_/ /_/  |_\____/    /_/  \____/_____/   
-                                                            
-    """)
+              ________________   _________   ______   __________  ______
+             /_  __/  _/ ____/  /_  __/   | / ____/  /_  __/ __ \/ ____/
+              / /  / // /  ______/ / / /| |/ /  ______/ / / / / / __/   
+             / / _/ // /__/_____/ / / ___ / /__/_____/ / / /_/ / /___   
+            /_/ /___/\____/    /_/ /_/  |_\____/    /_/  \____/_____/      
+         """)                                                   
+       
     choice = int(input("Choose mode:\n1: Computer\n2: Multiplayer\n> "))
+    global playMode
+    
     playMode = choice
 
     if playMode == 1:
@@ -191,6 +224,8 @@ def startup():
     if playMode == 2:
         print("You are now playing in multiplayer mode.")
 
+    global playName
+    global playName2
     playName = input("Enter player 1 name:\n> ")
     NewPlayer_1()
 
@@ -208,9 +243,28 @@ def main():
         elif playMode == 2:
             DrawMove_multiplayer(tttBoard)
         else:
-            exit(1)
+            break
+def playAgain():
+    global tttBoard
+    tttBoard = originalBoard
+    playAgain = input("Play again? (y/n)\n> ")
+    if playAgain == 'y':
 
+        startup()
+        main()
+    elif playAgain == 'n':
+        print("Goodbye")
+        con.commit()
+        con.close()
+        exit(0)
+    else:
+        print("Please type y or n.")
+        playAgain()
 
+def end():
+    print("Current standings:")
+    PrintDatabase()
+    playAgain()
 
 
 startup()
