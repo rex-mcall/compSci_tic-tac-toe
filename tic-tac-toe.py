@@ -1,5 +1,7 @@
 import sqlite3
 import random
+import os
+
 originalBoard = [[1,2,3], [4,5,6], [7,8,9]]
 tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
 con = sqlite3.connect('winloss.db')
@@ -8,6 +10,22 @@ cur = con.cursor()
 playName = ""
 playName2 = ""
 playMode = 0
+
+files = os.listdir('.')
+dbExists = False
+for i in files:
+    if i == "winloss.db" and os.path.getsize("winloss.db") > 0 : dbExists = True
+if dbExists: pass
+else:
+    cur.execute("""CREATE TABLE win_record (
+    name text,
+    wins integer,
+    loss integer,
+    tie integer
+    )""")
+    con.commit()
+    cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", ("bot",0,0,0))
+    con.commit()
 
 def NewPlayer_1(): # adds new player to data base if they don't already exist
     currNames = cur.execute("SELECT name from win_record")
@@ -71,7 +89,17 @@ def EnterMove(board):
             board[i][board[i].index(move)] = "X"
         except ValueError:
                 pass
-
+def EnterMoveP2(board):
+    #
+    # the function accepts the board current status, asks the user about their move, 
+    # checks the input and updates the board according to the user's decision
+    #
+    move = int(input("Enter your move: "))
+    for i in range(0,3):
+        try:
+            board[i][board[i].index(move)] = "O"
+        except ValueError:
+                pass
 def MakeListOfFreeFields(board):
     #
     # the function browses the board and builds a list of all the free squares; 
@@ -107,11 +135,13 @@ def DrawMove_computer(board):
     DisplayBoard(tttBoard)
     if VictoryFor(tttBoard, 'X'):
         print("You win!")
+        UpdateScore(playName,"bot")
         exit(0)
     print("My turn: ")
     ff = MakeListOfFreeFields(tttBoard)
     if len(ff) == 0: 
         print("Tie")
+        Tie(playName,"bot")
         exit(0)
     randomMove = random.randrange(1,len(ff))
     try:
@@ -120,31 +150,39 @@ def DrawMove_computer(board):
     except ValueError:
         pass
     if VictoryFor(tttBoard, 'O'):
-        print("You lose!")
+        UpdateScore("bot", playName)
         exit(0)
 
 def DrawMove_multiplayer(board):
+    print("It is ", playName, "s turn")
     EnterMove(tttBoard)
     DisplayBoard(tttBoard)
     if VictoryFor(tttBoard, 'X'):
-        print("You win!")
+        print(playName, " wins!")
+        UpdateScore(playName, playName2)
         exit(0)
     print("My turn: ")
     ff = MakeListOfFreeFields(tttBoard)
     if len(ff) == 0: 
         print("Tie")
+        Tie(playName,playName2)
         exit(0)
-    randomMove = random.randrange(1,len(ff))
-    try:
-        tttBoard[ff[randomMove][0]][ff[randomMove][1]] = "O"
-        DisplayBoard(tttBoard)
-    except ValueError:
-        pass
+    print("It is ", playName2, "s turn")
+    EnterMoveP2(tttBoard)
     if VictoryFor(tttBoard, 'O'):
-        print("You lose!")
+        print(playName2, "wins")
+        UpdateScore(playName2,playName)
         exit(0)
-    
+   
 def startup():
+    print("""
+          ________________   _________   ______   __________  ______
+         /_  __/  _/ ____/  /_  __/   | / ____/  /_  __/ __ \/ ____/
+          / /  / // /  ______/ / / /| |/ /  ______/ / / / / / __/   
+         / / _/ // /__/_____/ / / ___ / /__/_____/ / / /_/ / /___   
+        /_/ /___/\____/    /_/ /_/  |_\____/    /_/  \____/_____/   
+                                                            
+    """)
     choice = int(input("Choose mode:\n1: Computer\n2: Multiplayer\n> "))
     playMode = choice
 
