@@ -1,5 +1,3 @@
-tttBoard = [["X",2,3], [4,"O",6], [7,8,"X"]]
-import random
 import sqlite3
 
 con = sqlite3.connect('winloss.db')
@@ -11,4 +9,7 @@ cur.execute("""CREATE TABLE win_record (
     loss integer,
     tie integer
     )""")
+cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", ("computer",0,0,0))
 con.commit()
+con.commit()
+con.close()

@@ -1,26 +1,49 @@
 import sqlite3
 import random
+originalBoard = [[1,2,3], [4,5,6], [7,8,9]]
 tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
 con = sqlite3.connect('winloss.db')
 cur = con.cursor()
 
-def NewPlayer(): # adds new player to data base
-    playName = input("enter name: ")
-    cur.execute("INSERT INTO win_record VALUES('rex',0,0,0)")
+playName = ""
+playName2 = ""
+playMode = 0
+
+def NewPlayer_1(): # adds new player to data base if they don't already exist
+    currNames = cur.execute("SELECT name from win_record")
+    for i in currNames:
+        if playName == i: return
+    cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName,0,0,0))
+    con.commit()
+
+def NewPlayer_2(): # adds new player to data base if they don't already exist
+    currNames = cur.execute("SELECT name from win_record")
+    for i in currNames:
+        if playName2 == i: return
+    cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName2,0,0,0))
     con.commit()
 
 def UpdateScore(Winner, Loser): # updates score pass wiiner first and loser 2nd
-    cur.execute("""UPDATE win_record SET wins = :wins
-                WHERE name = :name""",{'name': Winner, 'wins' : num })
+    cur.execute("SELECT * FROM win_record Where name = :name",{'name' : Winner})
+    w = cur.fetchone()
+    cur.execute("UPDATE win_record (wins) VALUES(?)",((w[1]+1)))
+    cur.execute("SELECT * FROM win_record Where name = :name",{'name' : Loser})
+    L = cur.fetchone()
+    cur.execute("UPDATE win_record (wins) VALUES(?)",((w[2]+1)))
+ 
+   
 
-
+def Tie(p1,p2):
+    cur.execute("SELECT * FROM win_record Where name = :name",{'name' : p1})
+    p1s = cur.fetchone()
+    cur.execute("UPDATE win_record (wins) VALUES(?)",((p1s[3]+1)))
+    cur.execute("SELECT * FROM win_record Where name = :name",{'name' : p2})
+    p2s = cur.fetchone()
+    cur.execute("UPDATE win_record (wins) VALUES(?)",((p2s[3]+1)))
+    
 def PrintDatabase(): #prints whole database 
     print(cur.fetchall())
-def testInt():
-    NewPlayer()
-    cur.execute("SELECT * FROM win_record Where name ='rex'")
-    print(cur.fetchone())
-testInt()
+
 
 def DisplayBoard(board):
     #
@@ -78,7 +101,7 @@ def VictoryFor(board, sign):
 #
 # the function draws the computer's move and updates the board
 #
-def DrawMove(board):
+def DrawMove_computer(board):
     
     EnterMove(tttBoard)
     DisplayBoard(tttBoard)
@@ -100,13 +123,54 @@ def DrawMove(board):
         print("You lose!")
         exit(0)
 
+def DrawMove_multiplayer(board):
+    EnterMove(tttBoard)
+    DisplayBoard(tttBoard)
+    if VictoryFor(tttBoard, 'X'):
+        print("You win!")
+        exit(0)
+    print("My turn: ")
+    ff = MakeListOfFreeFields(tttBoard)
+    if len(ff) == 0: 
+        print("Tie")
+        exit(0)
+    randomMove = random.randrange(1,len(ff))
+    try:
+        tttBoard[ff[randomMove][0]][ff[randomMove][1]] = "O"
+        DisplayBoard(tttBoard)
+    except ValueError:
+        pass
+    if VictoryFor(tttBoard, 'O'):
+        print("You lose!")
+        exit(0)
+    
 def startup():
+    choice = int(input("Choose mode:\n1: Computer\n2: Multiplayer\n> "))
+    playMode = choice
+
+    if playMode == 1:
+        print("You are now playing against the computer.")
+    if playMode == 2:
+        print("You are now playing in multiplayer mode.")
+
+    playName = input("Enter player 1 name:\n> ")
+    NewPlayer_1()
+
+    if playMode == 2:        
+        playName2 = input("Enter player 2 name:\n>  ")
+        NewPlayer_2()
+    
     PrintDatabase()
     DisplayBoard(tttBoard)
 
 def main():
     while(1):
-        DrawMove(tttBoard)
+        if playMode == 1:
+            DrawMove_computer(tttBoard)
+        elif playMode == 2:
+            DrawMove_multiplayer(tttBoard)
+        else:
+            exit(1)
 
 
 
