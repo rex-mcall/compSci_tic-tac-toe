@@ -1,3 +1,4 @@
+from os import name, stat
 from drawMove import drawMove
 import sqlite3
 import random
@@ -48,7 +49,20 @@ def NewPlayer_2(): # adds new player to data base if they don't already exist
     if playerExists != True:
         cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName,0,0,0))
         con.commit()
-
+def PrintStats(nameToFetch):
+    cur.execute("SELECT name FROM win_record")
+    currNames = cur.fetchall()
+    playerExists = False
+    for i in currNames:
+        if nameToFetch == i[0]: playerExists = True
+    if playerExists != True:
+        print(nameToFetch," does not exist. Please choose an existing person from the database.")
+        PrintDatabase()
+    else:
+        cur.execute("SELECT * FROM win_record WHERE name = :name",{'name':nameToFetch})
+        stats = cur.fetchone()
+        print(nameToFetch,"wins {}% of the time.".format(int(100 * (stats[1] / (stats[1]+stats[2]+stats[3])))))
+        print(nameToFetch, "has {} wins, {} losses, and {} ties.".format(stats[1],stats[2],stats[3]))
 def UpdateScore(Winner, Loser): # updates score pass wiiner first and loser 2nd
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : Winner})
     w = cur.fetchone()
@@ -75,7 +89,7 @@ def Tie(p1,p2):
     with con: 
         cur.execute("""UPDATE win_record SET tie = :tie 
                         WHERE name = :name """,
-                        {'name': p1,'wins':(w[3]+1)})
+                        {'name': p1,'tie':(w[3]+1)})
                         # cur.execute( "UPDATE win_record SET wins = ? WHERE true", ((w[1]+1)) )
             
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : p2})
@@ -214,7 +228,7 @@ def startup():
             /_/ /___/\____/    /_/ /_/  |_\____/    /_/  \____/_____/      
          """)                                                   
        
-    choice = int(input("Choose mode:\n1: Computer\n2: Multiplayer\n> "))
+    choice = int(input("Choose mode:\n1: Computer\n2: Multiplayer\n3: Print a player's stats\n> "))
     global playMode
     
     playMode = choice
@@ -223,6 +237,14 @@ def startup():
         print("You are now playing against the computer.")
     if playMode == 2:
         print("You are now playing in multiplayer mode.")
+    if playMode == 3:
+        print("Players in database:")
+        cur.execute("SELECT name FROM win_record")
+        currNames = cur.fetchall()
+        for i in currNames:
+            print(i[0])
+        PrintStats(input("Whose stats do you want?\n> "))
+        startup()
 
     global playName
     global playName2
@@ -237,6 +259,8 @@ def startup():
     DisplayBoard(tttBoard)
 
 def main():
+    global tttBoard
+    tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
     while(1):
         if playMode == 1:
             DrawMove_computer(tttBoard)
@@ -245,11 +269,10 @@ def main():
         else:
             break
 def playAgain():
-    global tttBoard
-    tttBoard = originalBoard
     playAgain = input("Play again? (y/n)\n> ")
+    global tttBoard
+    tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
     if playAgain == 'y':
-
         startup()
         main()
     elif playAgain == 'n':
