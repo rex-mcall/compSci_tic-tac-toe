@@ -1,9 +1,7 @@
-from os import name, stat
-from drawMove import drawMove
 import sqlite3
 import random
 import os
-from drawMove import drawMove
+
 
 originalBoard = [[1,2,3], [4,5,6], [7,8,9]]
 tttBoard = [[1,2,3], [4,5,6], [7,8,9]]
