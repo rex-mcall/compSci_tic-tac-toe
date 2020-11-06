@@ -12,6 +12,7 @@ playName = ""
 playName2 = ""
 playMode = 0
 
+# creates a new database if it doesn't already exist
 files = os.listdir('.')
 dbExists = False
 for i in files:
@@ -38,6 +39,7 @@ def NewPlayer_1(): # adds new player to data base if they don't already exist
         cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName,0,0,0))
         con.commit()
 
+
 def NewPlayer_2(): # adds new player to data base if they don't already exist
     cur.execute("SELECT name FROM win_record")
     currNames = cur.fetchall()
@@ -47,7 +49,9 @@ def NewPlayer_2(): # adds new player to data base if they don't already exist
     if playerExists != True:
         cur.execute("INSERT INTO win_record (name, wins, loss, tie) VALUES(?, ?, ?, ?)", (playName,0,0,0))
         con.commit()
-def PrintStats(nameToFetch):
+
+
+def PrintStats(nameToFetch): # prints the win and loss statistics of a player
     cur.execute("SELECT name FROM win_record")
     currNames = cur.fetchall()
     playerExists = False
@@ -61,6 +65,8 @@ def PrintStats(nameToFetch):
         stats = cur.fetchone()
         print(nameToFetch,"wins {}% of the time.".format(int(100 * (stats[1] / (stats[1]+stats[2]+stats[3])))))
         print(nameToFetch, "has {} wins, {} losses, and {} ties.".format(stats[1],stats[2],stats[3]))
+
+
 def UpdateScore(Winner, Loser): # updates score pass wiiner first and loser 2nd
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : Winner})
     w = cur.fetchone()
@@ -68,20 +74,16 @@ def UpdateScore(Winner, Loser): # updates score pass wiiner first and loser 2nd
         cur.execute("""UPDATE win_record SET wins = :wins 
                         WHERE name = :name """,
                         {'name': Winner,'wins':(w[1]+1)})
-                        # cur.execute( "UPDATE win_record SET wins = ? WHERE true", ((w[1]+1)) )
-            
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : Loser})
     L = cur.fetchone()
     with con:       
         cur.execute("""UPDATE win_record SET loss = :loss 
                         WHERE name = :name """,
                         {'name': Loser,'loss':(L[2]+1)})
-                        #cur.execute("UPDATE win_record SET wins = ?",((L[2]+1)))
     con.commit()
- 
-   
 
-def Tie(p1,p2):
+
+def Tie(p1,p2): #updates tboth players' records with a tie
     cur.execute("SELECT * FROM win_record Where name = :name",{'name' : p1})
     w = cur.fetchone()
     with con: 
@@ -99,7 +101,7 @@ def Tie(p1,p2):
                         #cur.execute("UPDATE win_record SET wins = ?",((L[2]+1)))
     con.commit()
     
-def PrintDatabase(): #prints whole database 
+def PrintDatabase(): #prints whole database, unformatted and used for testing
     cur.execute("SELECT * FROM win_record")
     print(cur.fetchall())
 
@@ -109,14 +111,16 @@ def DisplayBoard(board):
     # the function accepts one parameter containing the board's current status
     # and prints it out to the console
     #
+    print("\n")
     bLine = "+---------+---------+---------+"
-    sLine = "|         |         |         |" # can u run code
+    sLine = "|         |         |         |"
     print(bLine)
     for x in range(0, 3):
         print(sLine)
         print("|   ", board[x][0], "   |   ", board[x][1], "   |   ", board[x][2], "   |")
         print(sLine)
         print(bLine)
+    print("\n")
 
 
 def EnterMove(board):
@@ -195,7 +199,7 @@ def DrawMove_computer(board):
         end()
 
 def DrawMove_multiplayer(board):
-    print("It is ", playName, "\'s turn")
+    print("It is ", playName, "\'s turn", sep='')
     EnterMove(tttBoard)
     DisplayBoard(tttBoard)
     if VictoryFor(tttBoard, 'X'):
@@ -203,13 +207,12 @@ def DrawMove_multiplayer(board):
         UpdateScore(playName, playName2)
         end()
 
-
     ff = MakeListOfFreeFields(tttBoard)
     if len(ff) == 0: 
         print("Tie")
         Tie(playName,playName2)
         end()
-    print("It is ", playName2, "\'s turn")
+    print("It is ", playName2, "\'s turn", sep='')
     EnterMoveP2(tttBoard)
     DisplayBoard(tttBoard)
     if VictoryFor(tttBoard, 'O'):
